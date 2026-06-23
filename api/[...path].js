@@ -326,6 +326,23 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 200, { token, user: publicUser(user), state: publicState(db, user) });
     }
 
+    if (req.method === "POST" && pathname === "/api/recover-password") {
+      const body = await parseBody(req);
+      const email = String(body.email || "").trim().toLowerCase();
+      const password = String(body.password || "");
+      if (!email || password.length < 4) return sendJson(res, 400, { error: "Dados invalidos" });
+
+      const user = db.users.find((item) => item.email === email);
+      if (!user || user.role === "admin") return sendJson(res, 404, { error: "E-mail nao encontrado" });
+
+      user.passwordHash = hashPassword(password);
+      Object.entries(db.sessions || {}).forEach(([token, sessionUserId]) => {
+        if (sessionUserId === user.id) delete db.sessions[token];
+      });
+      await writeDb(db);
+      return sendJson(res, 200, { ok: true });
+    }
+
     if (req.method === "GET" && pathname === "/api/state") {
       const user = requireUser(req, res, db);
       if (!user) return;

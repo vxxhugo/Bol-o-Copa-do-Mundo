@@ -39,6 +39,9 @@ const elements = {
   logoutButton: document.querySelector("#logoutButton"),
   loginForm: document.querySelector("#loginForm"),
   registerForm: document.querySelector("#registerForm"),
+  recoverForm: document.querySelector("#recoverForm"),
+  noLivePanel: document.querySelector("#noLivePanel"),
+  noLivePredictionsButton: document.querySelector("#noLivePredictionsButton"),
   adminPanel: document.querySelector("#adminPanel"),
   adminSettingsForm: document.querySelector("#adminSettingsForm"),
   adminMatchesList: document.querySelector("#adminMatchesList"),
@@ -477,6 +480,12 @@ function renderRanking() {
     .join("");
 }
 
+function renderNoLivePanel() {
+  const user = currentUser();
+  const hasLiveMatch = state.matches.some(isLiveMatch);
+  elements.noLivePanel.classList.toggle("hidden", !user || hasLiveMatch);
+}
+
 function renderAppTabs() {
   const user = currentUser();
   const activeTab = state.activeTab || "classification";
@@ -596,6 +605,12 @@ function renderLiveMatches() {
       `;
     })
     .join("");
+}
+
+function switchAppTab(tab) {
+  state.activeTab = tab;
+  saveState();
+  render();
 }
 
 function renderLivePredictionTable(match) {
@@ -951,6 +966,43 @@ async function register(formData) {
   showToast("Conta criada. Bem-vindo ao bolao.");
 }
 
+async function recoverPassword(formData) {
+  const email = formData.get("email").trim().toLowerCase();
+  const password = formData.get("password");
+
+  if (password.length < 4) {
+    showToast("A nova senha precisa ter pelo menos 4 caracteres.");
+    return;
+  }
+
+  if (API_ENABLED) {
+    try {
+      await apiRequest("/api/recover-password", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      elements.recoverForm.reset();
+      setAuthTab("login");
+      showToast("Senha atualizada. Entre com a nova senha.");
+    } catch (error) {
+      showToast(error.message);
+    }
+    return;
+  }
+
+  const user = state.users.find((item) => item.email.toLowerCase() === email);
+  if (!user || user.role === "admin") {
+    showToast("E-mail não encontrado.");
+    return;
+  }
+
+  user.password = password;
+  saveState();
+  elements.recoverForm.reset();
+  setAuthTab("login");
+  showToast("Senha atualizada. Entre com a nova senha.");
+}
+
 async function login(formData) {
   const email = formData.get("email").trim().toLowerCase();
   const password = formData.get("password");
@@ -992,29 +1044,29 @@ function render() {
   renderAppTabs();
   renderFeedStatus();
   renderRanking();
+  renderNoLivePanel();
   renderAdminPanel();
   renderLiveMatches();
   renderMatches();
   renderCalendar();
 }
 
+function setAuthTab(tab) {
+  document.querySelectorAll("[data-auth-tab]").forEach((item) => item.classList.toggle("active", item.dataset.authTab === tab));
+  elements.loginForm.classList.toggle("hidden", tab !== "login");
+  elements.registerForm.classList.toggle("hidden", tab !== "register");
+  elements.recoverForm.classList.toggle("hidden", tab !== "recover");
+}
+
 document.querySelectorAll("[data-auth-tab]").forEach((button) => {
-  button.addEventListener("click", () => {
-    document.querySelectorAll("[data-auth-tab]").forEach((item) => item.classList.remove("active"));
-    button.classList.add("active");
-    const isLogin = button.dataset.authTab === "login";
-    elements.loginForm.classList.toggle("hidden", !isLogin);
-    elements.registerForm.classList.toggle("hidden", isLogin);
-  });
+  button.addEventListener("click", () => setAuthTab(button.dataset.authTab));
 });
 
 elements.appTabButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    state.activeTab = button.dataset.appTab;
-    saveState();
-    render();
-  });
+  button.addEventListener("click", () => switchAppTab(button.dataset.appTab));
 });
+
+elements.noLivePredictionsButton.addEventListener("click", () => switchAppTab("predictions"));
 
 elements.loginForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -1024,6 +1076,11 @@ elements.loginForm.addEventListener("submit", (event) => {
 elements.registerForm.addEventListener("submit", (event) => {
   event.preventDefault();
   register(new FormData(elements.registerForm));
+});
+
+elements.recoverForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  recoverPassword(new FormData(elements.recoverForm));
 });
 
 elements.adminSettingsForm.addEventListener("submit", (event) => {
