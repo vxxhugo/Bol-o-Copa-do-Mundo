@@ -156,6 +156,7 @@ input:focus {
 .app-tabs,
 .scoreboard,
 .no-live-panel,
+.predictions-shortcut-panel,
 .admin-panel,
 .calendar-panel,
 .matches {
@@ -166,6 +167,7 @@ input:focus {
 .app-tabs,
 .scoreboard,
 .no-live-panel,
+.predictions-shortcut-panel,
 .live-panel,
 .admin-panel,
 .calendar-panel,
@@ -179,6 +181,7 @@ input:focus {
 .auth-panel,
 .scoreboard,
 .no-live-panel,
+.predictions-shortcut-panel,
 .live-panel,
 .admin-panel,
 .calendar-panel {
@@ -230,7 +233,7 @@ input:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-bottom: 16px;
   padding: 4px;
 }
@@ -249,6 +252,20 @@ input:focus {
 .auth-form {
   display: grid;
   gap: 13px;
+}
+
+.link-button {
+  background: transparent;
+  box-shadow: none;
+  color: var(--gold);
+  justify-self: center;
+  min-height: auto;
+  padding: 2px 4px;
+}
+
+.link-button:hover {
+  background: transparent;
+  text-decoration: underline;
 }
 
 label {
@@ -277,6 +294,10 @@ label {
   color: var(--gold);
 }
 
+.danger-button {
+  color: #ffb5ad !important;
+}
+
 .tab-panel {
   grid-column: 1 / -1;
 }
@@ -301,7 +322,8 @@ label {
   gap: 10px;
 }
 
-.no-live-panel {
+.no-live-panel,
+.predictions-shortcut-panel {
   align-items: center;
   background:
     linear-gradient(135deg, rgba(245, 200, 75, 0.12), rgba(25, 169, 116, 0.08)),
@@ -311,14 +333,16 @@ label {
   justify-content: space-between;
 }
 
-.no-live-panel h2 {
+.no-live-panel h2,
+.predictions-shortcut-panel h2 {
   color: #ffffff;
   font-size: 1.08rem;
   line-height: 1.15;
   margin: 2px 0 0;
 }
 
-.no-live-panel button {
+.no-live-panel button,
+.predictions-shortcut-panel button {
   flex-shrink: 0;
 }
 
@@ -347,6 +371,14 @@ label {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.admin-actions {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
   margin-top: 16px;
   padding-top: 16px;
 }
@@ -1052,17 +1084,20 @@ label {
     font-size: 1.08rem;
   }
 
-  .no-live-panel {
+  .no-live-panel,
+  .predictions-shortcut-panel {
     align-items: stretch;
     flex-direction: column;
     gap: 10px;
   }
 
-  .no-live-panel h2 {
+  .no-live-panel h2,
+  .predictions-shortcut-panel h2 {
     font-size: 0.98rem;
   }
 
-  .no-live-panel button {
+  .no-live-panel button,
+  .predictions-shortcut-panel button {
     width: 100%;
   }
 

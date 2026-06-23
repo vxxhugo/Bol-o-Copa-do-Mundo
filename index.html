@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
@@ -21,7 +21,6 @@
         <div class="tabs" role="tablist" aria-label="Acesso">
           <button class="tab active" data-auth-tab="login" type="button">Entrar</button>
           <button class="tab" data-auth-tab="register" type="button">Cadastrar</button>
-          <button class="tab" data-auth-tab="recover" type="button">Recuperar senha</button>
         </div>
 
         <form id="loginForm" class="auth-form">
@@ -34,6 +33,7 @@
             <input required type="password" name="password" autocomplete="current-password" />
           </label>
           <button type="submit">Entrar no bolão</button>
+          <button class="link-button" data-auth-tab="recover" type="button">Esqueceu a senha?</button>
         </form>
 
         <form id="registerForm" class="auth-form hidden">
@@ -75,13 +75,6 @@
         <button class="app-tab admin-tab hidden" data-app-tab="admin" type="button">Admin</button>
       </section>
 
-      <section class="no-live-panel protected-panel hidden" id="noLivePanel">
-        <div>
-          <p class="eyebrow">Agora</p>
-          <h2>Sem jogos no momento</h2>
-        </div>
-        <button id="noLivePredictionsButton" type="button">Jogos disponíveis para fazer previsões</button>
-      </section>
 
       <section class="scoreboard protected-panel tab-panel hidden" data-app-panel="classification">
         <div class="section-title">
@@ -91,6 +84,21 @@
           </div>
         </div>
         <div id="rankingList" class="ranking-list"></div>
+      </section>
+
+      <section class="no-live-panel protected-panel hidden" id="noLivePanel">
+        <div>
+          <p class="eyebrow">Agora</p>
+          <h2>Sem jogos no momento</h2>
+        </div>
+      </section>
+
+      <section class="predictions-shortcut-panel protected-panel hidden" id="predictionsShortcutPanel">
+        <div>
+          <p class="eyebrow">Palpites</p>
+          <h2>Previsões abertas</h2>
+        </div>
+        <button id="noLivePredictionsButton" type="button">Palpites disponíveis</button>
       </section>
 
       <section class="live-panel protected-panel tab-panel hidden" id="livePanel" data-app-panel="classification">
@@ -144,6 +152,11 @@
           </label>
           <button type="submit">Salvar configurações</button>
         </form>
+
+        <div class="admin-actions">
+          <p class="admin-title">Classificação</p>
+          <button id="adminResetStandingsButton" class="ghost danger-button" type="button">Zerar tabela</button>
+        </div>
 
         <div class="admin-tools">
           <div>
@@ -209,6 +222,7 @@
 
         <div class="actions">
           <button class="save-prediction" type="button">Salvar palpite</button>
+          <button class="ghost clear-prediction" type="button">Limpar palpite</button>
           <span class="prediction-note"></span>
         </div>
 
@@ -219,3 +233,4 @@
     <script src="app.js"></script>
   </body>
 </html>
+

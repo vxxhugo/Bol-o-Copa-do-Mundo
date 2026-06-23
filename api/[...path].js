@@ -383,6 +383,20 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 200, { state: publicState(db, user) });
     }
 
+    if (req.method === "POST" && pathname === "/api/predictions/clear") {
+      const user = requireUser(req, res, db);
+      if (!user) return;
+      const body = await parseBody(req);
+      const match = db.matches.find((item) => item.id === body.matchId);
+      if (!match) return sendJson(res, 404, { error: "Jogo nao encontrado" });
+      const settings = { ...DEFAULT_SETTINGS, ...(db.settings || {}) };
+      if (!predictionWindow(match, settings).isOpen) return sendJson(res, 409, { error: "Palpites travados para este jogo" });
+
+      if (db.predictions[user.id]) delete db.predictions[user.id][match.id];
+      await writeDb(db);
+      return sendJson(res, 200, { state: publicState(db, user) });
+    }
+
     if (req.method === "POST" && pathname === "/api/admin/settings") {
       const user = requireAdmin(req, res, db);
       if (!user) return;
@@ -396,6 +410,14 @@ module.exports = async function handler(req, res) {
         feedLookbackDays: Number(body.feedLookbackDays),
         feedLookaheadDays: Number(body.feedLookaheadDays),
       };
+      await writeDb(db);
+      return sendJson(res, 200, { state: publicState(db, user) });
+    }
+
+    if (req.method === "POST" && pathname === "/api/admin/reset-standings") {
+      const user = requireAdmin(req, res, db);
+      if (!user) return;
+      db.predictions = {};
       await writeDb(db);
       return sendJson(res, 200, { state: publicState(db, user) });
     }

@@ -41,9 +41,11 @@ const elements = {
   registerForm: document.querySelector("#registerForm"),
   recoverForm: document.querySelector("#recoverForm"),
   noLivePanel: document.querySelector("#noLivePanel"),
+  predictionsShortcutPanel: document.querySelector("#predictionsShortcutPanel"),
   noLivePredictionsButton: document.querySelector("#noLivePredictionsButton"),
   adminPanel: document.querySelector("#adminPanel"),
   adminSettingsForm: document.querySelector("#adminSettingsForm"),
+  adminResetStandingsButton: document.querySelector("#adminResetStandingsButton"),
   adminMatchesList: document.querySelector("#adminMatchesList"),
   adminUsersList: document.querySelector("#adminUsersList"),
   livePanel: document.querySelector("#livePanel"),
@@ -483,7 +485,9 @@ function renderRanking() {
 function renderNoLivePanel() {
   const user = currentUser();
   const hasLiveMatch = state.matches.some(isLiveMatch);
-  elements.noLivePanel.classList.toggle("hidden", !user || hasLiveMatch);
+  const isClassificationTab = (state.activeTab || "classification") === "classification";
+  elements.noLivePanel.classList.toggle("hidden", !user || !isClassificationTab || hasLiveMatch);
+  elements.predictionsShortcutPanel.classList.toggle("hidden", !user || !isClassificationTab);
 }
 
 function renderAppTabs() {
@@ -695,7 +699,12 @@ function renderMatches() {
 
     const savePrediction = node.querySelector(".save-prediction");
     savePrediction.disabled = !windowInfo.isOpen;
+    savePrediction.textContent = prediction ? "Atualizar palpite" : "Salvar palpite";
     savePrediction.addEventListener("click", () => savePredictionForMatch(match, homePrediction.value, awayPrediction.value));
+
+    const clearPrediction = node.querySelector(".clear-prediction");
+    clearPrediction.disabled = !windowInfo.isOpen || !prediction;
+    clearPrediction.addEventListener("click", () => clearPredictionForMatch(match));
 
     node.querySelector(".prediction-note").textContent = noteForMatch(user, match, prediction, windowInfo);
 
@@ -815,6 +824,39 @@ async function savePredictionForMatch(match, homeValue, awayValue) {
   showToast("Palpite salvo e pronto para a trava.");
 }
 
+async function clearPredictionForMatch(match) {
+  const user = currentUser();
+  const windowInfo = predictionWindow(match);
+  if (!user || !windowInfo.isOpen) {
+    showToast("Palpite indisponivel para este jogo.");
+    return;
+  }
+
+  if (API_ENABLED) {
+    try {
+      const payload = await apiRequest("/api/predictions/clear", {
+        method: "POST",
+        body: JSON.stringify({ matchId: match.id }),
+      });
+      delete predictionDrafts[draftKey(user.id, match.id)];
+      applyServerPayload(payload);
+      render();
+      showToast("Palpite limpo.");
+    } catch (error) {
+      showToast(error.message);
+    }
+    return;
+  }
+
+  if (state.predictions[user.id]) {
+    delete state.predictions[user.id][match.id];
+  }
+  delete predictionDrafts[draftKey(user.id, match.id)];
+  saveState();
+  render();
+  showToast("Palpite limpo.");
+}
+
 function saveResultForMatch(match, homeValue, awayValue) {
   const home = Number(homeValue);
   const away = Number(awayValue);
@@ -861,6 +903,30 @@ async function saveAdminSettings(formData) {
   saveState();
   render();
   showToast("Configurações do bolão salvas.");
+}
+
+async function resetStandings() {
+  const user = currentUser();
+  if (!isAdmin(user)) return;
+
+  if (API_ENABLED) {
+    try {
+      const payload = await apiRequest("/api/admin/reset-standings", { method: "POST", body: "{}" });
+      predictionDrafts = {};
+      applyServerPayload(payload);
+      render();
+      showToast("Tabela zerada.");
+    } catch (error) {
+      showToast(error.message);
+    }
+    return;
+  }
+
+  state.predictions = {};
+  predictionDrafts = {};
+  saveState();
+  render();
+  showToast("Tabela zerada.");
 }
 
 async function saveAdminMatchResult(row) {
@@ -1087,6 +1153,8 @@ elements.adminSettingsForm.addEventListener("submit", (event) => {
   event.preventDefault();
   saveAdminSettings(new FormData(elements.adminSettingsForm));
 });
+
+elements.adminResetStandingsButton.addEventListener("click", () => resetStandings());
 
 elements.adminMatchesList.addEventListener("click", (event) => {
   const button = event.target.closest(".admin-save-match");
