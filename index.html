@@ -72,6 +72,7 @@
         <button class="app-tab active" data-app-tab="classification" type="button">Classificação</button>
         <button class="app-tab" data-app-tab="predictions" type="button">Palpites</button>
         <button class="app-tab" data-app-tab="calendar" type="button">Calendário de jogos</button>
+        <button class="app-tab" data-app-tab="rules" type="button">Regras</button>
         <button class="app-tab admin-tab hidden" data-app-tab="admin" type="button">Admin</button>
       </section>
 
@@ -168,6 +169,11 @@
             <div id="adminUsersList" class="admin-list"></div>
           </div>
         </div>
+
+        <div class="admin-history">
+          <p class="admin-title">Histórico de ações</p>
+          <div id="adminHistoryList" class="admin-list"></div>
+        </div>
       </section>
 
       <section class="matches protected-panel tab-panel hidden" data-app-panel="predictions">
@@ -193,6 +199,16 @@
           <div class="live-dot"><span></span> <span>Atualizado pela ESPN</span></div>
         </div>
         <div id="calendarList" class="calendar-list"></div>
+      </section>
+
+      <section class="rules-panel protected-panel tab-panel hidden" data-app-panel="rules">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Regras</p>
+            <h2>Como funciona a pontuação</h2>
+          </div>
+        </div>
+        <div id="rulesList" class="rules-list"></div>
       </section>
     </main>
 

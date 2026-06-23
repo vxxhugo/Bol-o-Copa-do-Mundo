@@ -44,6 +44,7 @@ function defaultDb() {
     predictions: {},
     matches: [],
     settings: DEFAULT_SETTINGS,
+    adminHistory: [],
     feedMessage: "Aguardando ESPN",
     lastFeedSync: null,
   };
@@ -76,6 +77,7 @@ async function readDb() {
   db.predictions = db.predictions || {};
   db.matches = Array.isArray(db.matches) ? db.matches : [];
   db.settings = { ...DEFAULT_SETTINGS, ...(db.settings || {}) };
+  db.adminHistory = Array.isArray(db.adminHistory) ? db.adminHistory : [];
   db.feedMessage = db.feedMessage || "Aguardando ESPN";
   db.lastFeedSync = db.lastFeedSync || null;
 
@@ -105,7 +107,13 @@ async function writeDb(db) {
   const { error } = await supabase
     .from("bolao_state")
     .upsert({ id: DB_ID, data: db, updated_at: nowIso() }, { onConflict: "id" });
-  if (error) throw new Error(`Erro ao salvar Supabase: ${error.message}`);
+  if (error) {
+    const message = `${error.message || ""} ${error.details || ""} ${error.hint || ""}`.toLowerCase();
+    if (message.includes("row-level security") || message.includes("permission") || message.includes("policy")) {
+      throw new Error("Supabase bloqueou a gravação. Execute supabase-corrigir-rls.sql e confira se a Vercel usa a service_role secret.");
+    }
+    throw new Error(`Erro ao salvar Supabase: ${error.message}`);
+  }
 }
 
 function publicUser(user) {
@@ -124,6 +132,7 @@ function publicState(db, currentUser = null) {
     predictions: db.predictions || {},
     matches: db.matches || [],
     settings: { ...DEFAULT_SETTINGS, ...(db.settings || {}) },
+    adminHistory: db.adminHistory || [],
     feedMessage: db.feedMessage || "Aguardando ESPN",
     lastFeedSync: db.lastFeedSync || null,
   };
@@ -180,6 +189,19 @@ function removeUserFromDb(db, userId) {
   });
 
   return null;
+}
+
+function addAdminHistory(db, user, action, details) {
+  db.adminHistory = [
+    {
+      id: randomId(),
+      action,
+      details,
+      adminName: user?.name || "Administrador",
+      createdAt: nowIso(),
+    },
+    ...(db.adminHistory || []),
+  ].slice(0, 50);
 }
 
 function authUser(req, db) {
@@ -410,6 +432,7 @@ module.exports = async function handler(req, res) {
         feedLookbackDays: Number(body.feedLookbackDays),
         feedLookaheadDays: Number(body.feedLookaheadDays),
       };
+      addAdminHistory(db, user, "Configurações alteradas", "Regras de pontuação e janela de palpites foram atualizadas.");
       await writeDb(db);
       return sendJson(res, 200, { state: publicState(db, user) });
     }
@@ -418,6 +441,7 @@ module.exports = async function handler(req, res) {
       const user = requireAdmin(req, res, db);
       if (!user) return;
       db.predictions = {};
+      addAdminHistory(db, user, "Tabela zerada", "Todos os palpites foram apagados.");
       await writeDb(db);
       return sendJson(res, 200, { state: publicState(db, user) });
     }
@@ -437,6 +461,7 @@ module.exports = async function handler(req, res) {
       match.completed = true;
       match.statusState = "post";
       match.statusDetail = "Corrigido pelo admin";
+      addAdminHistory(db, user, "Placar corrigido", `${match.home} x ${match.away}: ${home} x ${away}.`);
       await writeDb(db);
       return sendJson(res, 200, { state: publicState(db, user) });
     }
@@ -446,8 +471,10 @@ module.exports = async function handler(req, res) {
       if (!user) return;
       const body = await parseBody(req);
       const userId = String(body.userId || "");
+      const target = db.users.find((item) => item.id === userId);
       const removalError = removeUserFromDb(db, userId);
       if (removalError) return sendJson(res, removalError.status, { error: removalError.error });
+      addAdminHistory(db, user, "Usuário removido", `${target.name} (${target.email}) foi removido.`);
       await writeDb(db);
       return sendJson(res, 200, { state: publicState(db, user) });
     }
@@ -456,8 +483,10 @@ module.exports = async function handler(req, res) {
       const user = requireAdmin(req, res, db);
       if (!user) return;
       const userId = decodeURIComponent(pathname.split("/").pop());
+      const target = db.users.find((item) => item.id === userId);
       const removalError = removeUserFromDb(db, userId);
       if (removalError) return sendJson(res, removalError.status, { error: removalError.error });
+      addAdminHistory(db, user, "Usuário removido", `${target.name} (${target.email}) foi removido.`);
       await writeDb(db);
       return sendJson(res, 200, { state: publicState(db, user) });
     }

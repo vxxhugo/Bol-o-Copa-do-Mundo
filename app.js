@@ -48,11 +48,13 @@ const elements = {
   adminResetStandingsButton: document.querySelector("#adminResetStandingsButton"),
   adminMatchesList: document.querySelector("#adminMatchesList"),
   adminUsersList: document.querySelector("#adminUsersList"),
+  adminHistoryList: document.querySelector("#adminHistoryList"),
   livePanel: document.querySelector("#livePanel"),
   liveGamesList: document.querySelector("#liveGamesList"),
   rankingList: document.querySelector("#rankingList"),
   matchesList: document.querySelector("#matchesList"),
   calendarList: document.querySelector("#calendarList"),
+  rulesList: document.querySelector("#rulesList"),
   matchTemplate: document.querySelector("#matchTemplate"),
   syncButton: document.querySelector("#syncButton"),
   feedStatus: document.querySelector("#feedStatus"),
@@ -157,6 +159,7 @@ function loadState() {
       matches: [],
       settings: { ...DEFAULT_SETTINGS },
       activeTab: ui.activeTab || "classification",
+      adminHistory: [],
       lastFeedSync: null,
       feedMessage: "Aguardando ESPN",
     });
@@ -174,6 +177,7 @@ function loadState() {
       matches: parsed.matches?.length ? parsed.matches : demoMatches(),
       settings: { ...DEFAULT_SETTINGS, ...(parsed.settings || {}) },
       activeTab: parsed.activeTab || "classification",
+      adminHistory: parsed.adminHistory || [],
       feedMessage: parsed.feedMessage || "Aguardando ESPN",
     });
   }
@@ -185,6 +189,7 @@ function loadState() {
     matches: demoMatches(),
     settings: { ...DEFAULT_SETTINGS },
     activeTab: "classification",
+    adminHistory: [],
     lastFeedSync: null,
     feedMessage: "Aguardando ESPN",
   });
@@ -219,6 +224,7 @@ function normalizeState(nextState) {
   return {
     ...nextState,
     settings: { ...DEFAULT_SETTINGS, ...(nextState.settings || {}) },
+    adminHistory: Array.isArray(nextState.adminHistory) ? nextState.adminHistory : [],
     users: mergeUsers(nextState.users || [], [adminUser]).map((user) =>
       user.email?.toLowerCase() === ADMIN_EMAIL ? { ...adminUser, ...user, role: "admin", password: user.password || ADMIN_PASSWORD } : { role: "player", ...user },
     ),
@@ -246,6 +252,24 @@ function isAdmin(user = currentUser()) {
 
 function participantUsers() {
   return state.users.filter((user) => user.role !== "admin");
+}
+
+function confirmAction(message) {
+  return window.confirm(message);
+}
+
+function addLocalAdminHistory(action, details) {
+  const user = currentUser();
+  state.adminHistory = [
+    {
+      id: crypto.randomUUID(),
+      action,
+      details,
+      adminName: user?.name || "Administrador",
+      createdAt: new Date().toISOString(),
+    },
+    ...(state.adminHistory || []),
+  ].slice(0, 50);
 }
 
 function draftKey(userId, matchId) {
@@ -490,6 +514,29 @@ function renderNoLivePanel() {
   elements.predictionsShortcutPanel.classList.toggle("hidden", !user || !isClassificationTab);
 }
 
+function renderRules() {
+  const config = currentSettings();
+  const rules = [
+    ["Placar exato", `${config.exactScore} pontos`],
+    ["Vencedor + gols de algum dos times", `${config.winnerGoal} pontos`],
+    ["Só vencedor", `${config.winnerOnly} pontos`],
+    ["Empate exato", `${config.exactScore} pontos`],
+    ["Qualquer outro empate", `${config.drawOther} pontos`],
+    ["Trava dos palpites", `Abre ${config.lockHours}h antes e trava no início do jogo`],
+  ];
+
+  elements.rulesList.innerHTML = rules
+    .map(
+      ([title, value]) => `
+        <div class="rule-item">
+          <strong>${escapeHtml(title)}</strong>
+          <span>${escapeHtml(value)}</span>
+        </div>
+      `,
+    )
+    .join("");
+}
+
 function renderAppTabs() {
   const user = currentUser();
   const activeTab = state.activeTab || "classification";
@@ -513,6 +560,7 @@ function renderAdminPanel() {
   if (!isAdmin(user)) {
     elements.adminMatchesList.innerHTML = "";
     elements.adminUsersList.innerHTML = "";
+    elements.adminHistoryList.innerHTML = "";
     return;
   }
 
@@ -554,6 +602,22 @@ function renderAdminPanel() {
       `,
     )
     .join("");
+
+  const history = state.adminHistory || [];
+  elements.adminHistoryList.innerHTML = history.length
+    ? history
+        .slice(0, 30)
+        .map(
+          (item) => `
+            <div class="history-item">
+              <strong>${escapeHtml(item.action || "Ação")}</strong>
+              <span>${escapeHtml(item.details || "")}</span>
+              <small>${escapeHtml(item.adminName || "Admin")} - ${formatDate(item.createdAt || new Date().toISOString())}</small>
+            </div>
+          `,
+        )
+        .join("")
+    : '<p class="empty-state">Nenhuma ação registrada ainda.</p>';
 }
 
 function isLiveMatch(match) {
@@ -651,6 +715,44 @@ function renderLivePredictionTable(match) {
   `;
 }
 
+function renderFinishedPredictionTable(match) {
+  const rows = participantUsers()
+    .map((user) => {
+      const prediction = state.predictions[user.id]?.[match.id];
+      const points = scorePrediction(prediction, match.result);
+      const scoreClass = points > 0 ? "pick-positive" : "pick-zero";
+      const predictionText = prediction ? `${prediction.home} x ${prediction.away}` : "Sem palpite";
+      const statusText = prediction ? `Pontuou ${points}` : "Sem palpite";
+
+      return `
+        <tr>
+          <td>${escapeHtml(user.name)}</td>
+          <td>${escapeHtml(predictionText)}</td>
+          <td class="${scoreClass}">${escapeHtml(statusText)}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  return `
+    <div class="finished-picks">
+      <div class="finished-picks-title">Quem pontuou neste jogo</div>
+      <div class="live-table-wrap">
+        <table class="live-picks-table">
+          <thead>
+            <tr>
+              <th>Participante</th>
+              <th>Palpite</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 function renderMatches() {
   const user = currentUser();
   elements.matchesList.innerHTML = "";
@@ -728,6 +830,7 @@ function renderCalendar() {
       const status = isLiveMatch(match) ? "Ao vivo" : match.completed ? "Finalizado" : windowInfo.hasStarted ? "Em andamento" : "Futuro";
       const statusClass = isLiveMatch(match) ? "calendar-status-live" : match.completed ? "calendar-status-final" : "calendar-status-future";
       const hasScore = match.result.home !== null && match.result.away !== null;
+      const isFinished = hasScore && (match.completed || match.statusState === "post");
       const score = hasScore ? `${match.result.home} x ${match.result.away}` : "x";
 
       return `
@@ -741,6 +844,7 @@ function renderCalendar() {
             <div class="team-logo">${logoMarkup(match.awayLogo, match.away)}</div>
           </div>
           <div class="calendar-date">${formatDate(match.kickoff)}</div>
+          ${isFinished ? renderFinishedPredictionTable(match) : ""}
         </article>
       `;
     })
@@ -749,14 +853,16 @@ function renderCalendar() {
 
 function noteForMatch(user, match, prediction, windowInfo) {
   if (!user) return "";
+  const hasResult = match.result.home !== null && match.result.away !== null;
   if (prediction) {
-    const points = scorePrediction(prediction, match.result);
-    const suffix = match.result.home === null ? "" : ` - ${points} pts`;
-    return `Seu palpite: ${prediction.home} x ${prediction.away}${suffix}`;
+    if (hasResult) return `Pontuou ${scorePrediction(prediction, match.result)}: seu palpite foi ${prediction.home} x ${prediction.away}.`;
+    if (windowInfo.hasStarted) return `Palpite travado: ${prediction.home} x ${prediction.away}.`;
+    return `Palpite salvo: ${prediction.home} x ${prediction.away}.`;
   }
-  if (windowInfo.isOpen) return "Janela aberta: trava no inicio do jogo.";
-  if (windowInfo.hasStarted) return "Palpites travados.";
-  return "Abre 24h antes da partida.";
+  if (hasResult) return "Sem palpite: pontuou 0.";
+  if (windowInfo.isOpen) return "Sem palpite: janela aberta até o início do jogo.";
+  if (windowInfo.hasStarted) return "Sem palpite: palpite travado.";
+  return "Sem palpite: abre 24h antes da partida.";
 }
 
 function renderTeamLogo(element, logoUrl, teamName) {
@@ -832,6 +938,8 @@ async function clearPredictionForMatch(match) {
     return;
   }
 
+  if (!confirmAction(`Limpar seu palpite de ${match.home} x ${match.away}?`)) return;
+
   if (API_ENABLED) {
     try {
       const payload = await apiRequest("/api/predictions/clear", {
@@ -874,6 +982,8 @@ function saveResultForMatch(match, homeValue, awayValue) {
 }
 
 async function saveAdminSettings(formData) {
+  if (!confirmAction("Salvar novas configurações de pontuação e trava do bolão?")) return;
+
   const settings = {
     exactScore: Number(formData.get("exactScore")),
     winnerGoal: Number(formData.get("winnerGoal")),
@@ -900,6 +1010,7 @@ async function saveAdminSettings(formData) {
   }
 
   state.settings = settings;
+  addLocalAdminHistory("Configurações alteradas", "Regras de pontuação e janela de palpites foram atualizadas.");
   saveState();
   render();
   showToast("Configurações do bolão salvas.");
@@ -908,6 +1019,7 @@ async function saveAdminSettings(formData) {
 async function resetStandings() {
   const user = currentUser();
   if (!isAdmin(user)) return;
+  if (!confirmAction("Zerar a tabela? Todos os palpites serão apagados e os pontos voltarão para 0.")) return;
 
   if (API_ENABLED) {
     try {
@@ -924,6 +1036,7 @@ async function resetStandings() {
 
   state.predictions = {};
   predictionDrafts = {};
+  addLocalAdminHistory("Tabela zerada", "Todos os palpites foram apagados.");
   saveState();
   render();
   showToast("Tabela zerada.");
@@ -939,6 +1052,8 @@ async function saveAdminMatchResult(row) {
     showToast("Digite um placar válido para corrigir.");
     return;
   }
+
+  if (!confirmAction(`Corrigir ${match.home} x ${match.away} para ${home} x ${away}?`)) return;
 
   if (API_ENABLED) {
     try {
@@ -959,6 +1074,7 @@ async function saveAdminMatchResult(row) {
   match.completed = true;
   match.statusState = "post";
   match.statusDetail = "Corrigido pelo admin";
+  addLocalAdminHistory("Placar corrigido", `${match.home} x ${match.away}: ${home} x ${away}.`);
   saveState();
   render();
   showToast("Placar corrigido pelo administrador.");
@@ -967,6 +1083,7 @@ async function saveAdminMatchResult(row) {
 async function removeUserById(userId) {
   const user = state.users.find((item) => item.id === userId);
   if (!user || user.role === "admin") return;
+  if (!confirmAction(`Remover a conta de ${user.name}? Os palpites desse usuário serão apagados.`)) return;
 
   if (API_ENABLED) {
     try {
@@ -985,6 +1102,7 @@ async function removeUserById(userId) {
 
   state.users = state.users.filter((item) => item.id !== userId);
   delete state.predictions[userId];
+  addLocalAdminHistory("Usuário removido", `${user.name} (${user.email}) foi removido.`);
   saveState();
   render();
   showToast("Usuário removido.");
@@ -1115,6 +1233,7 @@ function render() {
   renderLiveMatches();
   renderMatches();
   renderCalendar();
+  renderRules();
 }
 
 function setAuthTab(tab) {

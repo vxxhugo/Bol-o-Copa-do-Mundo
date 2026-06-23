@@ -30,3 +30,5 @@ Para trocar a senha antes de publicar, adicione uma variavel de ambiente na Verc
 - A atualizacao automatica acontece a cada 10 segundos.
 - O Supabase fica apenas no servidor. Nao coloque a `SUPABASE_SERVICE_ROLE_KEY` dentro do `app.js` ou em codigo do navegador.
 - Sem as variaveis do Supabase configuradas na Vercel, a API nao consegue salvar contas e palpites de forma compartilhada.
+- Se a RLS tiver sido ativada no Supabase, execute `supabase-corrigir-rls.sql` no SQL Editor.
+- Em `SUPABASE_SERVICE_ROLE_KEY`, use a chave `service_role secret`, nao a `anon public`.

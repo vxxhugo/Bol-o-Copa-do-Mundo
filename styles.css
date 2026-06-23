@@ -159,6 +159,7 @@ input:focus {
 .predictions-shortcut-panel,
 .admin-panel,
 .calendar-panel,
+.rules-panel,
 .matches {
   min-width: 0;
 }
@@ -171,6 +172,7 @@ input:focus {
 .live-panel,
 .admin-panel,
 .calendar-panel,
+.rules-panel,
 .match-card {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -184,7 +186,8 @@ input:focus {
 .predictions-shortcut-panel,
 .live-panel,
 .admin-panel,
-.calendar-panel {
+.calendar-panel,
+.rules-panel {
   align-self: start;
   padding: 20px;
   width: 100%;
@@ -200,13 +203,13 @@ input:focus {
   display: grid;
   gap: 8px;
   grid-column: 1 / -1;
-  grid-template-columns: repeat(3, minmax(150px, 220px));
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
   justify-content: center;
   padding: 8px;
 }
 
 .app-tabs.has-admin {
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
   justify-content: stretch;
 }
 
@@ -381,6 +384,40 @@ label {
   gap: 10px;
   margin-top: 16px;
   padding-top: 16px;
+}
+
+.admin-history {
+  border-top: 1px solid var(--line);
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.history-item,
+.rule-item {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+}
+
+.history-item strong,
+.rule-item strong {
+  color: #ffffff;
+}
+
+.history-item span,
+.history-item small,
+.rule-item span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.rules-list {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .admin-title {
@@ -650,6 +687,21 @@ label {
 .live-picks-table .pick-zero {
   color: var(--red);
   font-weight: 950;
+}
+
+.finished-picks {
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+  padding-top: 12px;
+  width: 100%;
+}
+
+.finished-picks-title {
+  color: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+  text-align: left;
 }
 
 .empty-state {
@@ -982,7 +1034,8 @@ label {
   .scoreboard,
   .live-panel,
   .admin-panel,
-  .calendar-panel {
+  .calendar-panel,
+  .rules-panel {
     padding: 12px;
   }
 
@@ -990,10 +1043,6 @@ label {
     gap: 6px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: 6px;
-  }
-
-  .app-tabs:not(.has-admin) .app-tab:nth-child(3) {
-    grid-column: 1 / -1;
   }
 
   .app-tab {
@@ -1244,6 +1293,15 @@ label {
 
   .live-table-wrap {
     margin-top: 10px;
+  }
+
+  .finished-picks {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .finished-picks-title {
+    font-size: 0.76rem;
   }
 
   .live-picks-table {
