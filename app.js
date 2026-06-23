@@ -886,7 +886,10 @@ async function removeUserById(userId) {
 
   if (API_ENABLED) {
     try {
-      const payload = await apiRequest(`/api/admin/users/${encodeURIComponent(userId)}`, { method: "DELETE" });
+      const payload = await apiRequest("/api/admin/remove-user", {
+        method: "POST",
+        body: JSON.stringify({ userId }),
+      });
       applyServerPayload(payload);
       render();
       showToast("Usuário removido do servidor.");

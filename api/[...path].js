@@ -379,6 +379,22 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 200, { state: publicState(db, user) });
     }
 
+    if (req.method === "POST" && pathname === "/api/admin/remove-user") {
+      const user = requireAdmin(req, res, db);
+      if (!user) return;
+      const body = await parseBody(req);
+      const userId = String(body.userId || "");
+      const target = db.users.find((item) => item.id === userId);
+      if (!target || target.role === "admin") return sendJson(res, 409, { error: "Usuario nao pode ser removido" });
+      db.users = db.users.filter((item) => item.id !== userId);
+      delete db.predictions[userId];
+      Object.entries(db.sessions || {}).forEach(([token, sessionUserId]) => {
+        if (sessionUserId === userId) delete db.sessions[token];
+      });
+      await writeDb(db);
+      return sendJson(res, 200, { state: publicState(db, user) });
+    }
+
     if (req.method === "DELETE" && pathname.startsWith("/api/admin/users/")) {
       const user = requireAdmin(req, res, db);
       if (!user) return;
@@ -387,6 +403,9 @@ module.exports = async function handler(req, res) {
       if (!target || target.role === "admin") return sendJson(res, 409, { error: "Usuario nao pode ser removido" });
       db.users = db.users.filter((item) => item.id !== userId);
       delete db.predictions[userId];
+      Object.entries(db.sessions || {}).forEach(([token, sessionUserId]) => {
+        if (sessionUserId === userId) delete db.sessions[token];
+      });
       await writeDb(db);
       return sendJson(res, 200, { state: publicState(db, user) });
     }
