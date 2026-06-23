@@ -873,15 +873,36 @@ label {
 }
 
 @media (max-width: 720px) {
+  body {
+    background: linear-gradient(160deg, #07100f 0%, #10231f 54%, #070b0a 100%);
+  }
+
+  button,
+  input {
+    min-height: 40px;
+  }
+
   .topbar {
+    align-items: end;
+    background-position: center center;
     grid-template-columns: 1fr;
+    min-height: 205px;
+    padding: 12px 12px 18px;
   }
 
   .session {
     grid-column: 1;
     justify-content: space-between;
     justify-self: stretch;
+    font-size: 0.78rem;
+    gap: 8px;
+    padding: 8px;
     width: 100%;
+  }
+
+  .session .ghost {
+    min-height: 34px;
+    padding: 0 10px;
   }
 
   .topbar h1 {
@@ -890,18 +911,70 @@ label {
   }
 
   .layout {
-    margin-top: -20px;
-    padding: 0 14px 36px;
+    gap: 10px;
     grid-template-columns: 1fr;
+    margin-top: -14px;
+    padding: 0 10px 28px;
   }
 
   .auth-page {
-    margin-top: -20px;
-    padding: 0 14px 36px;
+    margin-top: -14px;
+    padding: 0 10px 28px;
+  }
+
+  .auth-panel,
+  .scoreboard,
+  .live-panel,
+  .admin-panel,
+  .calendar-panel {
+    padding: 12px;
   }
 
   .app-tabs {
-    grid-template-columns: 1fr;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 6px;
+  }
+
+  .app-tabs:not(.has-admin) .app-tab:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  .app-tab {
+    font-size: 0.78rem;
+    min-height: 40px;
+    padding: 0 8px;
+  }
+
+  .tabs {
+    margin-bottom: 12px;
+  }
+
+  .tab {
+    font-size: 0.82rem;
+    min-height: 38px;
+  }
+
+  .auth-form {
+    gap: 10px;
+  }
+
+  label {
+    font-size: 0.82rem;
+    gap: 6px;
+  }
+
+  .section-title {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .section-title h2 {
+    font-size: 1rem;
+  }
+
+  .eyebrow {
+    font-size: 0.68rem;
   }
 
   .section-title,
@@ -912,39 +985,233 @@ label {
     flex-direction: column;
   }
 
-  .score-row {
-    grid-template-columns: 1fr 28px 1fr;
+  .feed-actions {
+    gap: 8px;
   }
 
-  .team {
+  .feed-actions .ghost {
+    width: 100%;
+  }
+
+  .ranking-list,
+  .matches,
+  .matches-list,
+  .calendar-list,
+  .live-games-list {
+    gap: 10px;
+  }
+
+  .rank-item {
     padding: 10px;
   }
 
+  .rank-summary {
+    gap: 8px;
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+  }
+
+  .rank-pos {
+    height: 28px;
+    width: 28px;
+  }
+
+  .rank-name {
+    font-size: 0.9rem;
+  }
+
+  .rank-detail {
+    font-size: 0.72rem;
+  }
+
+  .rank-score {
+    font-size: 1.08rem;
+  }
+
+  .matches-list {
+    grid-template-columns: 1fr;
+  }
+
+  .match-card {
+    padding: 12px;
+  }
+
+  .match-head {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .match-title {
+    font-size: 0.98rem;
+  }
+
+  .match-date,
+  .prediction-note,
+  .live-dot {
+    font-size: 0.72rem;
+  }
+
+  .status-pill {
+    font-size: 0.7rem;
+    min-width: 0;
+    padding: 6px 8px;
+  }
+
+  .score-row {
+    gap: 6px;
+    grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr);
+  }
+
+  .team {
+    gap: 6px;
+    padding: 8px;
+  }
+
   .team-logo {
-    height: 46px;
-    width: 46px;
+    height: 38px;
+    width: 38px;
+  }
+
+  .team-logo img {
+    padding: 5px;
+  }
+
+  .team strong {
+    font-size: 0.78rem;
+    line-height: 1.15;
+    min-height: 18px;
+  }
+
+  .prediction-input,
+  .official-score input {
+    font-size: 1rem;
+  }
+
+  .versus {
+    font-size: 0.92rem;
+  }
+
+  .actions {
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .actions button {
+    width: 100%;
   }
 
   .admin-form,
   .admin-row,
   .admin-score-edit,
-  .calendar-item,
-  .rank-summary {
+  .calendar-item {
     grid-template-columns: 1fr;
   }
 
-  .calendar-main {
-    grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  .admin-form,
+  .admin-tools,
+  .admin-list {
     gap: 8px;
   }
 
+  .admin-row {
+    padding: 8px;
+  }
+
+  .admin-score-edit {
+    align-items: stretch;
+  }
+
+  .admin-score-edit input {
+    min-height: 38px;
+  }
+
+  .live-card {
+    padding: 10px;
+  }
+
+  .live-card-head {
+    align-items: flex-start;
+    font-size: 0.74rem;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .live-scoreboard {
+    gap: 6px;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+
+  .live-team {
+    gap: 6px;
+  }
+
+  .live-team strong {
+    font-size: 0.78rem;
+    line-height: 1.15;
+  }
+
+  .live-score {
+    gap: 6px;
+    min-width: 76px;
+  }
+
+  .live-score span {
+    font-size: 1.65rem;
+  }
+
+  .live-score small {
+    font-size: 0.78rem;
+  }
+
+  .live-prediction {
+    font-size: 0.76rem;
+    margin-top: 10px;
+    padding: 8px;
+  }
+
+  .live-table-wrap {
+    margin-top: 10px;
+  }
+
+  .live-picks-table {
+    min-width: 0;
+  }
+
+  .live-picks-table th,
+  .live-picks-table td {
+    font-size: 0.72rem;
+    padding: 8px 6px;
+  }
+
+  .calendar-item {
+    gap: 8px;
+    padding: 28px 8px 10px;
+  }
+
+  .calendar-main {
+    gap: 5px;
+    grid-template-columns: 34px minmax(0, 1fr) 42px minmax(0, 1fr) 34px;
+  }
+
   .calendar-team-name {
-    font-size: 0.9rem;
+    font-size: 0.74rem;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
   }
 
   .calendar-score-center {
-    font-size: 1.1rem;
+    font-size: 0.92rem;
     min-width: 42px;
+  }
+
+  .calendar-date,
+  .calendar-status {
+    font-size: 0.7rem;
+  }
+
+  .calendar-status {
+    padding: 5px 8px;
+    right: 8px;
+    top: 7px;
   }
 
   .official-score {
@@ -953,5 +1220,41 @@ label {
 
   .official-score button {
     grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 420px) {
+  .topbar {
+    min-height: 185px;
+  }
+
+  .session {
+    font-size: 0.72rem;
+  }
+
+  .app-tab {
+    font-size: 0.72rem;
+  }
+
+  .calendar-main {
+    grid-template-columns: 30px minmax(0, 1fr) 36px minmax(0, 1fr) 30px;
+  }
+
+  .calendar-score-center {
+    font-size: 0.82rem;
+    min-width: 36px;
+  }
+
+  .team-logo {
+    height: 34px;
+    width: 34px;
+  }
+
+  .live-score {
+    min-width: 66px;
+  }
+
+  .live-score span {
+    font-size: 1.48rem;
   }
 }
