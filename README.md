@@ -17,6 +17,14 @@ Site com login, cadastro, palpites, calendario, classificacao ao vivo e painel d
 
 Depois disso, todos acessam o mesmo link da Vercel e compartilham as mesmas contas, palpites, jogos e ranking.
 
+## Testar o servidor
+
+Depois do redeploy, entre como admin e clique em **Testar servidor** no painel de administrador.
+
+- Se aparecer sucesso, a Vercel esta conseguindo ler e gravar no Supabase.
+- Se aparecer erro de RLS, execute `supabase-corrigir-rls.sql` no SQL Editor.
+- Se aparecer erro de chave, revise `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` na Vercel e faca redeploy.
+
 ## Login de administrador
 
 - E-mail: `admin@bolao.com`

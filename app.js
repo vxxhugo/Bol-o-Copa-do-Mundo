@@ -45,6 +45,7 @@ const elements = {
   noLivePredictionsButton: document.querySelector("#noLivePredictionsButton"),
   adminPanel: document.querySelector("#adminPanel"),
   adminSettingsForm: document.querySelector("#adminSettingsForm"),
+  adminDiagnosticsButton: document.querySelector("#adminDiagnosticsButton"),
   adminResetStandingsButton: document.querySelector("#adminResetStandingsButton"),
   adminMatchesList: document.querySelector("#adminMatchesList"),
   adminUsersList: document.querySelector("#adminUsersList"),
@@ -75,9 +76,15 @@ async function apiRequest(path, options = {}) {
       ...(options.headers || {}),
     },
   });
-  const payload = await response.json().catch(() => ({}));
+  const text = await response.text();
+  let payload = {};
+  try {
+    payload = text ? JSON.parse(text) : {};
+  } catch (error) {
+    payload = { error: text.slice(0, 220) };
+  }
   if (!response.ok) {
-    throw new Error(payload.error || "Erro no servidor");
+    throw new Error(payload.error || `Erro no servidor (${response.status})`);
   }
   return payload;
 }
@@ -1042,6 +1049,23 @@ async function resetStandings() {
   showToast("Tabela zerada.");
 }
 
+async function testServerConnection() {
+  const user = currentUser();
+  if (!isAdmin(user)) return;
+
+  if (!API_ENABLED) {
+    showToast("Teste disponivel somente no site publicado.");
+    return;
+  }
+
+  try {
+    await apiRequest("/api/admin/diagnostics");
+    showToast("Servidor conectado ao Supabase com leitura e gravacao.");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
 async function saveAdminMatchResult(row) {
   const match = state.matches.find((item) => item.id === row.dataset.matchId);
   if (!match) return;
@@ -1272,6 +1296,8 @@ elements.adminSettingsForm.addEventListener("submit", (event) => {
   event.preventDefault();
   saveAdminSettings(new FormData(elements.adminSettingsForm));
 });
+
+elements.adminDiagnosticsButton.addEventListener("click", () => testServerConnection());
 
 elements.adminResetStandingsButton.addEventListener("click", () => resetStandings());
 

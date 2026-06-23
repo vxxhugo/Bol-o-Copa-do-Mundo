@@ -64,10 +64,29 @@ function getSupabase() {
   return supabaseClient;
 }
 
+function describeSupabaseError(error, action) {
+  const raw = `${error?.message || ""} ${error?.details || ""} ${error?.hint || ""} ${error?.code || ""}`.trim();
+  const message = raw.toLowerCase();
+
+  if (message.includes("relation") && message.includes("bolao_state")) {
+    return "A tabela bolao_state nao existe no Supabase. Execute o arquivo supabase-schema.sql no SQL Editor.";
+  }
+
+  if (message.includes("row-level security") || message.includes("policy") || message.includes("permission denied")) {
+    return "Supabase bloqueou a gravacao. Execute supabase-corrigir-rls.sql e confira se SUPABASE_SERVICE_ROLE_KEY usa a chave service_role/secret, nao a publishable/anon.";
+  }
+
+  if (message.includes("invalid api key") || message.includes("jwt") || message.includes("unauthorized")) {
+    return "Chave do Supabase invalida na Vercel. Em SUPABASE_SERVICE_ROLE_KEY use a secret/service_role key, nao a publishable/anon.";
+  }
+
+  return `Erro ao ${action} no Supabase: ${error?.message || "sem detalhe retornado"}`;
+}
+
 async function readDb() {
   const supabase = getSupabase();
   const { data, error } = await supabase.from("bolao_state").select("data").eq("id", DB_ID).maybeSingle();
-  if (error) throw new Error(`Erro ao ler Supabase: ${error.message}`);
+  if (error) throw new Error(describeSupabaseError(error, "ler"));
 
   const db = data?.data || defaultDb();
   let changed = false;
@@ -107,6 +126,7 @@ async function writeDb(db) {
   const { error } = await supabase
     .from("bolao_state")
     .upsert({ id: DB_ID, data: db, updated_at: nowIso() }, { onConflict: "id" });
+  if (error) throw new Error(describeSupabaseError(error, "salvar"));
   if (error) {
     const message = `${error.message || ""} ${error.details || ""} ${error.hint || ""}`.toLowerCase();
     if (message.includes("row-level security") || message.includes("permission") || message.includes("policy")) {
@@ -371,6 +391,21 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 200, { user: publicUser(user), state: publicState(db, user) });
     }
 
+    if (req.method === "GET" && pathname === "/api/admin/diagnostics") {
+      const user = requireAdmin(req, res, db);
+      if (!user) return;
+      await writeDb(db);
+      return sendJson(res, 200, {
+        ok: true,
+        canRead: true,
+        canWrite: true,
+        users: db.users.length,
+        matches: db.matches.length,
+        predictionOwners: Object.keys(db.predictions || {}).length,
+        lastFeedSync: db.lastFeedSync,
+      });
+    }
+
     if (req.method === "POST" && pathname === "/api/sync") {
       const user = requireUser(req, res, db);
       if (!user) return;
@@ -491,8 +526,9 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 200, { state: publicState(db, user) });
     }
 
-    return sendJson(res, 404, { error: "Endpoint nao encontrado" });
+    return sendJson(res, 404, { error: `Endpoint nao encontrado: ${req.method} ${pathname}` });
   } catch (error) {
+    console.error("Bolao API error:", error);
     return sendJson(res, 500, { error: error.message || "Erro interno" });
   }
 };
