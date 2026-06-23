@@ -136,6 +136,11 @@ function sendJson(res, status, payload) {
 }
 
 function parseBody(req) {
+  if (req.body) {
+    if (typeof req.body === "string") return Promise.resolve(JSON.parse(req.body || "{}"));
+    return Promise.resolve(req.body);
+  }
+
   return new Promise((resolve, reject) => {
     let body = "";
     req.on("data", (chunk) => {
@@ -157,6 +162,24 @@ function parseBody(req) {
       }
     });
   });
+}
+
+function removeUserFromDb(db, userId) {
+  const target = db.users.find((item) => item.id === userId);
+  if (!target || target.role === "admin") {
+    return { status: 409, error: "Usuario nao pode ser removido" };
+  }
+
+  db.users = db.users.filter((item) => item.id !== userId);
+  db.predictions = db.predictions || {};
+  db.sessions = db.sessions || {};
+  delete db.predictions[userId];
+
+  Object.entries(db.sessions).forEach(([token, sessionUserId]) => {
+    if (sessionUserId === userId) delete db.sessions[token];
+  });
+
+  return null;
 }
 
 function authUser(req, db) {
@@ -384,13 +407,8 @@ module.exports = async function handler(req, res) {
       if (!user) return;
       const body = await parseBody(req);
       const userId = String(body.userId || "");
-      const target = db.users.find((item) => item.id === userId);
-      if (!target || target.role === "admin") return sendJson(res, 409, { error: "Usuario nao pode ser removido" });
-      db.users = db.users.filter((item) => item.id !== userId);
-      delete db.predictions[userId];
-      Object.entries(db.sessions || {}).forEach(([token, sessionUserId]) => {
-        if (sessionUserId === userId) delete db.sessions[token];
-      });
+      const removalError = removeUserFromDb(db, userId);
+      if (removalError) return sendJson(res, removalError.status, { error: removalError.error });
       await writeDb(db);
       return sendJson(res, 200, { state: publicState(db, user) });
     }
@@ -399,13 +417,8 @@ module.exports = async function handler(req, res) {
       const user = requireAdmin(req, res, db);
       if (!user) return;
       const userId = decodeURIComponent(pathname.split("/").pop());
-      const target = db.users.find((item) => item.id === userId);
-      if (!target || target.role === "admin") return sendJson(res, 409, { error: "Usuario nao pode ser removido" });
-      db.users = db.users.filter((item) => item.id !== userId);
-      delete db.predictions[userId];
-      Object.entries(db.sessions || {}).forEach(([token, sessionUserId]) => {
-        if (sessionUserId === userId) delete db.sessions[token];
-      });
+      const removalError = removeUserFromDb(db, userId);
+      if (removalError) return sendJson(res, removalError.status, { error: removalError.error });
       await writeDb(db);
       return sendJson(res, 200, { state: publicState(db, user) });
     }
