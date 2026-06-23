@@ -24,7 +24,7 @@ Depois do redeploy, entre como admin e clique em **Testar servidor** no painel d
 - Se aparecer sucesso, a Vercel esta conseguindo ler e gravar no Supabase.
 - Se aparecer erro de RLS, execute `supabase-corrigir-rls.sql` no SQL Editor.
 - Se aparecer erro de chave, revise `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` na Vercel e faca redeploy.
-- A pasta `api` precisa ser enviada inteira para o GitHub, incluindo as subpastas `api/admin` e `api/predictions`.
+- No plano Hobby da Vercel, use a pasta pronta `bolao-copa-github-hobby-pronto`, que publica apenas uma Serverless Function: `api/action.js`.
 
 ## Login de administrador
 

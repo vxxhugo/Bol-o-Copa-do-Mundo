@@ -68,10 +68,11 @@ let authToken = localStorage.getItem(AUTH_TOKEN_KEY) || "";
 let predictionDrafts = {};
 
 async function apiRequest(path, options = {}) {
-  const response = await fetch(path, {
+  const response = await fetch("/api/action", {
     ...options,
     headers: {
       "Content-Type": "application/json",
+      "X-Bolao-Path": path,
       ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...(options.headers || {}),
     },
