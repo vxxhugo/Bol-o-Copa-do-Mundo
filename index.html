@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bolão Copa do Mundo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>Bolão Copa do Mundo</h1>
+      <div class="session">
+        <span id="currentUserLabel">Visitante</span>
+        <button id="logoutButton" class="ghost hidden" type="button">Sair</button>
+      </div>
+    </header>
+
+    <section class="auth-page" id="authPanel">
+      <div class="auth-shell">
+        <section class="panel auth-panel">
+        <div class="tabs" role="tablist" aria-label="Acesso">
+          <button class="tab active" data-auth-tab="login" type="button">Entrar</button>
+          <button class="tab" data-auth-tab="register" type="button">Cadastrar</button>
+        </div>
+
+        <form id="loginForm" class="auth-form">
+          <label>
+            E-mail
+            <input required type="email" name="email" autocomplete="email" />
+          </label>
+          <label>
+            Senha
+            <input required type="password" name="password" autocomplete="current-password" />
+          </label>
+          <button type="submit">Entrar no bolão</button>
+        </form>
+
+        <form id="registerForm" class="auth-form hidden">
+          <label>
+            Nome no ranking
+            <input required type="text" name="name" minlength="2" maxlength="24" autocomplete="name" />
+          </label>
+          <label>
+            E-mail
+            <input required type="email" name="email" autocomplete="email" />
+          </label>
+          <label>
+            Senha
+            <input required type="password" name="password" minlength="4" autocomplete="new-password" />
+          </label>
+          <button type="submit">Criar conta</button>
+        </form>
+      </section>
+      </div>
+    </section>
+
+    <main class="layout">
+      <section class="app-tabs protected-panel hidden" id="appTabs" role="tablist" aria-label="Áreas do bolão">
+        <button class="app-tab active" data-app-tab="classification" type="button">Classificação</button>
+        <button class="app-tab" data-app-tab="predictions" type="button">Palpites</button>
+        <button class="app-tab" data-app-tab="calendar" type="button">Calendário de jogos</button>
+        <button class="app-tab admin-tab hidden" data-app-tab="admin" type="button">Admin</button>
+      </section>
+
+      <section class="scoreboard protected-panel tab-panel hidden" data-app-panel="classification">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Classificação</p>
+            <h2>Tabela em tempo real</h2>
+          </div>
+        </div>
+        <div id="rankingList" class="ranking-list"></div>
+      </section>
+
+      <section class="live-panel protected-panel tab-panel hidden" id="livePanel" data-app-panel="classification">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Agora</p>
+            <h2>Jogo ao vivo</h2>
+          </div>
+          <div class="live-dot live-dot-hot"><span></span> Em andamento</div>
+        </div>
+        <div id="liveGamesList" class="live-games-list"></div>
+      </section>
+
+      <section class="admin-panel protected-panel tab-panel hidden" id="adminPanel" data-app-panel="admin">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Controle</p>
+            <h2>Administrador</h2>
+          </div>
+          <span class="admin-badge">Admin</span>
+        </div>
+
+        <form id="adminSettingsForm" class="admin-form">
+          <label>
+            Exato
+            <input name="exactScore" min="0" max="50" type="number" />
+          </label>
+          <label>
+            Vencedor + gol
+            <input name="winnerGoal" min="0" max="50" type="number" />
+          </label>
+          <label>
+            Só vencedor
+            <input name="winnerOnly" min="0" max="50" type="number" />
+          </label>
+          <label>
+            Outro empate
+            <input name="drawOther" min="0" max="50" type="number" />
+          </label>
+          <label>
+            Trava antes do jogo (h)
+            <input name="lockHours" min="1" max="72" type="number" />
+          </label>
+          <label>
+            ESPN dias atrás
+            <input name="feedLookbackDays" min="0" max="7" type="number" />
+          </label>
+          <label>
+            ESPN dias à frente
+            <input name="feedLookaheadDays" min="1" max="30" type="number" />
+          </label>
+          <button type="submit">Salvar configurações</button>
+        </form>
+
+        <div class="admin-tools">
+          <div>
+            <p class="admin-title">Corrigir placares</p>
+            <div id="adminMatchesList" class="admin-list"></div>
+          </div>
+          <div>
+            <p class="admin-title">Usuários</p>
+            <div id="adminUsersList" class="admin-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="matches protected-panel tab-panel hidden" data-app-panel="predictions">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Palpites</p>
+            <h2>Jogos do bolão</h2>
+          </div>
+          <div class="feed-actions">
+            <button id="syncButton" class="ghost" type="button">Atualizar agora</button>
+            <div class="live-dot"><span></span> <span id="feedStatus">ESPN automática a cada 10s</span></div>
+          </div>
+        </div>
+        <div id="matchesList" class="matches-list"></div>
+      </section>
+
+      <section class="calendar-panel protected-panel tab-panel hidden" data-app-panel="calendar">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Agenda</p>
+            <h2>Calendário de jogos</h2>
+          </div>
+          <div class="live-dot"><span></span> <span>Atualizado pela ESPN</span></div>
+        </div>
+        <div id="calendarList" class="calendar-list"></div>
+      </section>
+    </main>
+
+    <template id="matchTemplate">
+      <article class="match-card">
+        <div class="match-head">
+          <div>
+            <p class="match-date"></p>
+            <h3 class="match-title"></h3>
+          </div>
+          <span class="status-pill"></span>
+        </div>
+
+        <div class="score-row">
+          <div class="team">
+            <div class="team-logo home-logo"></div>
+            <strong class="home-name"></strong>
+            <input class="prediction-input home-prediction" min="0" max="20" type="number" inputmode="numeric" />
+          </div>
+          <span class="versus">x</span>
+          <div class="team">
+            <div class="team-logo away-logo"></div>
+            <strong class="away-name"></strong>
+            <input class="prediction-input away-prediction" min="0" max="20" type="number" inputmode="numeric" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="save-prediction" type="button">Salvar palpite</button>
+          <span class="prediction-note"></span>
+        </div>
+
+      </article>
+    </template>
+
+    <div id="toast" class="toast hidden" role="status"></div>
+    <script src="app.js"></script>
+  </body>
+</html>

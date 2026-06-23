@@ -1,0 +1,16 @@
+{
+  "name": "bolao-copa-do-mundo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bolao Copa do Mundo com login, palpites, ranking ao vivo e feed ESPN.",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "latest"
+  },
+  "devDependencies": {
+    "vercel": "latest"
+  }
+}
