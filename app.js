@@ -239,6 +239,10 @@ function isAdmin(user = currentUser()) {
   return user?.role === "admin";
 }
 
+function participantUsers() {
+  return state.users.filter((user) => user.role !== "admin");
+}
+
 function draftKey(userId, matchId) {
   return `${userId}:${matchId}`;
 }
@@ -444,7 +448,7 @@ function renderRanking() {
     return;
   }
 
-  const ranked = [...state.users]
+  const ranked = participantUsers()
     .map((item) => ({ ...item, stats: userStats(item.id) }))
     .sort((a, b) => b.stats.points - a.stats.points || b.stats.exacts - a.stats.exacts || a.name.localeCompare(b.name));
   const liveCount = state.matches.filter(isLiveMatch).length;
@@ -595,8 +599,7 @@ function renderLiveMatches() {
 }
 
 function renderLivePredictionTable(match) {
-  const rows = state.users
-    .filter((user) => user.role !== "admin")
+  const rows = participantUsers()
     .map((user) => {
       const prediction = state.predictions[user.id]?.[match.id];
       const points = scorePrediction(prediction, match.result);
